@@ -1,0 +1,55 @@
+{{!
+    This file is part of Moodle - http://moodle.org/
+
+    Moodle is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    Moodle is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
+}}
+{{!
+    @template local_webshell/shell
+
+    Setting page which shows the webshell to the admin user
+
+    Context variables required for this template:
+    * image The src for the plugin logo.
+    * username The username of the shell user
+    * workingdir The working directory which the user navigated to
+
+    Example context (json):
+    {
+        "image": "https://example.org/local/webshell/pix/icon.svg",
+        "username": "www-data",
+        "workingdir": "/var/www/html/local/webshell"
+    }
+}}
+
+<div class="local_webshell">
+    <div class="heading">
+        <img src="{{image}}" alt="Logo" width="90" height="90"/>
+        <h2>{{#str}}pluginname, local_webshell{{/str}}</h2>
+    </div>
+    <div class="shell-result"></div>
+    <div class="shell-input">
+        <div class="start">
+            <span class="username">{{username}}</span>:<span class="workingdir">{{workingdir}}</span>#
+        </div>
+        <div class="end">
+            <input id="shell-cmd" name="cmd"/>
+        </div>
+    </div>
+</div>
+
+{{#js}}
+    require(['local_webshell/shell'], function(component) {
+    component.init();
+    });
+{{/js}}

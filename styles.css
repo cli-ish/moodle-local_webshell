@@ -1,0 +1,83 @@
+.local_webshell {
+    background-color: rgba(0, 0, 0, 0.15);
+    margin-bottom: 30px;
+}
+
+.local_webshell .heading {
+    padding: 5px;
+}
+
+.local_webshell .cmdline {
+    font-weight: bold;
+}
+
+.local_webshell .shell-result {
+    padding: 5px;
+    min-height: 500px;
+    max-height: 500px;
+    height: 100%;
+    overflow-y: scroll;
+    border-bottom-style: solid;
+    border-bottom-color: rgba(0, 0, 0, 0.54);
+    border-bottom-width: 1px;
+
+    border-top-style: solid;
+    border-top-color: rgba(0, 0, 0, 0.54);
+    border-top-width: 1px;
+
+    display: block;
+    unicode-bidi: embed;
+    font-family: monospace;
+    white-space: pre;
+}
+
+.local_webshell .shell-input {
+    font-weight: bold;
+    display: flex;
+    column-gap: 5px;
+    background-color: rgba(0, 0, 0, 0.10);
+}
+
+.local_webshell .shell-input .start {
+    flex-grow: 0;
+    line-height: 30px;
+    padding-left: 5px;
+    display: block;
+}
+
+.local_webshell .shell-input .end {
+    flex-grow: 1;
+}
+
+.local_webshell #shell-cmd {
+    height: 30px;
+    line-height: 30px;
+    border: none;
+    background: transparent;
+    color: black;
+    font-family: monospace;
+    font-size: 14px;
+    width: 100%;
+    align-self: center;
+    box-sizing: border-box;
+    outline: none;
+}
+
+.local_webshell .username,
+.local_webshell .arg {
+    font-weight: bold;
+    color: green;
+}
+
+.local_webshell .workingdir {
+    font-weight: bold;
+    color: blue;
+}
+
+.local_webshell .heading img {
+    display: inline-block;
+}
+
+.local_webshell .heading h2 {
+    display: inline-block;
+}
