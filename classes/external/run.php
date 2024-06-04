@@ -84,7 +84,7 @@ class run extends \core_external\external_api {
             ['command' => $command]);
 
         $context = \context_system::instance();
-        self::validate_context(\context_system::instance());
+        self::validate_context($context);
         require_capability('local/webshell:runshell', $context);
 
         $executor = new executor();
@@ -159,7 +159,7 @@ class run extends \core_external\external_api {
             ['value' => $value, 'type' => $type]);
 
         $context = \context_system::instance();
-        self::validate_context(\context_system::instance());
+        self::validate_context($context);
         require_capability('local/webshell:runshell', $context);
 
         $executor = new executor();
