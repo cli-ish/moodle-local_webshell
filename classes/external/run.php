@@ -82,7 +82,11 @@ class run extends \core_external\external_api {
     public static function execute(string $command): array {
         $params = self::validate_parameters(self::execute_parameters(),
             ['command' => $command]);
-        $command = $params['command'];
+
+        $context = \context_system::instance();
+        self::validate_context(\context_system::instance());
+        require_capability('local/webshell:runshell', $context);
+
         $executor = new executor();
 
         $path = get_user_preferences('local_webshell_current_dir', null);
@@ -97,7 +101,7 @@ class run extends \core_external\external_api {
             set_user_preference('local_webshell_current_dir', $executor->get_working_dir());
         }
 
-        $result = $executor->execute($command);
+        $result = $executor->execute($params['command']);
 
         $path = $result->get_workingdir();
         if ($path !== $executor->get_working_dir()) {
@@ -153,6 +157,11 @@ class run extends \core_external\external_api {
     public static function hinting(string $value, string $type = 'binary'): array {
         $params = self::validate_parameters(self::hinting_parameters(),
             ['value' => $value, 'type' => $type]);
+
+        $context = \context_system::instance();
+        self::validate_context(\context_system::instance());
+        require_capability('local/webshell:runshell', $context);
+
         $executor = new executor();
 
         $path = get_user_preferences('local_webshell_current_dir', $executor->get_working_dir());
