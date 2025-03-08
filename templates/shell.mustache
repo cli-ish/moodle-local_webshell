@@ -31,20 +31,25 @@
         "workingdir": "/var/www/html/local/webshell"
     }
 }}
-
 <div class="local_webshell">
-    <div class="heading">
-        <img src="{{image}}" alt="Logo" width="90" height="90"/>
-        <h2>{{#str}}pluginname, local_webshell{{/str}}</h2>
+    <div class="body-box">
+        <div class="heading">
+            <img src="{{image}}" alt="Logo" width="90" height="90"/>
+            <h2>{{#str}}pluginname, local_webshell{{/str}}</h2>
+        </div>
+        <div class="shell-result"></div>
+        <div class="shell-input">
+            <div class="start">
+                <span class="username">{{username}}</span>:<span class="workingdir">{{workingdir}}</span>#
+            </div>
+            <div class="end">
+                <input id="shell-cmd" name="cmd"/>
+            </div>
+        </div>
     </div>
-    <div class="shell-result"></div>
-    <div class="shell-input">
-        <div class="start">
-            <span class="username">{{username}}</span>:<span class="workingdir">{{workingdir}}</span>#
-        </div>
-        <div class="end">
-            <input id="shell-cmd" name="cmd"/>
-        </div>
+    <div>
+        <a href="{{reseturl}}" class="btn btn-secondary reset-preferences">{{#str}}
+            reset_preferences, local_webshell{{/str}}</a>
     </div>
 </div>
 

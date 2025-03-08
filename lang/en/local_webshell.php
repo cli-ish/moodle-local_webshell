@@ -24,4 +24,5 @@
 
 $string['pluginname'] = 'Webshell';
 $string['privacy:current_dir'] = 'The user\'s preference for current working directory.';
+$string['reset_preferences'] = 'Reset preferences';
 $string['webshell:runshell'] = 'Run webshell commands';

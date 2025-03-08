@@ -25,8 +25,8 @@
 defined('MOODLE_INTERNAL') || die();
 
 $plugin->component = 'local_webshell';
-$plugin->version = 2024060400;
+$plugin->version = 2025030801;
 $plugin->requires = 2022041900;
 $plugin->maturity = MATURITY_STABLE;
-$plugin->release = '1.0.1';
-$plugin->supported = [311, 404];
+$plugin->release = '1.0.2';
+$plugin->supported = [311, 405];

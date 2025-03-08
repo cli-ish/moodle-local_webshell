@@ -10,7 +10,12 @@
 import ajax from 'core/ajax';
 
 export default class Component {
+    /**
+     * Init the component.
+     */
     constructor() {
+        this.history = this._fetchHistory();
+        this.selectionArrow = this.history.length;
         this.resultbox = document.querySelector('body .local_webshell .shell-result');
         this.inputbox = document.querySelector('body .local_webshell .shell-input');
         this.stateReady();
@@ -25,11 +30,22 @@ export default class Component {
         return new Component();
     }
 
+    /**
+     * Update workingdir/username if changed.
+     * @param {object} result
+     * @private
+     */
     _updateUi(result) {
         this.inputbox.querySelector('.username').innerText = result.user;
         this.inputbox.querySelector('.workingdir').innerText = result.workingdir;
     }
 
+    /**
+     * Print the result of the command execution.
+     * @param {string} command
+     * @param {object} result
+     * @private
+     */
     _printResult(command, result) {
         const cmdNode = document.createElement('div');
         cmdNode.innerHTML = '<div class="cmdline"><span class="username">' + result.user + ':</span><span class="workingdir">' +
@@ -41,6 +57,12 @@ export default class Component {
         this.resultbox.scrollTop = this.resultbox.scrollHeight;
     }
 
+    /**
+     * Execute command and fetch result.
+     * @param {string} command
+     * @param {function} callback
+     * @private
+     */
     _execCommand(command, callback) {
         let promises = ajax.call([
             {
@@ -56,6 +78,13 @@ export default class Component {
         });
     }
 
+    /**
+     * Query hinting webservice.
+     * @param {string} value
+     * @param {string} type
+     * @param {function} callback
+     * @private
+     */
     _hinting(value, type, callback) {
         let promises = ajax.call([
             {
@@ -82,33 +111,76 @@ export default class Component {
             switch (event.key) {
                 case 'Enter':
                     command = e.target.value;
-                    // Todo: insert into history!
-                    // Todo: reset cursor of history.
                     e.target.value = '';
                     if (command === 'clear') {
                         that.resultbox.innerHTML = '';
                         return;
                     }
+                    this._pushToHistory(command);
+                    this.selectionArrow = this.history.length;
                     that._execCommand(command, data => {
                         that._printResult(command, data);
                         that._updateUi(data);
                     });
                     break;
                 case 'ArrowUp':
-                    // Todo: move cursor one up in history.
+                    e.preventDefault();
+                    if (that.selectionArrow - 1 < 0) {
+                        return;
+                    }
+                    that.selectionArrow -= 1;
+                    that.inputbox.querySelector('#shell-cmd').value = that.history[that.selectionArrow];
                     break;
                 case 'ArrowDown':
-                    // Todo: move cursor one down in history.
+                    e.preventDefault();
+                    if (that.selectionArrow + 1 >= that.history.length) {
+                        that.selectionArrow = that.history.length;
+                        that.inputbox.querySelector('#shell-cmd').value = "";
+                        return;
+                    }
+                    that.selectionArrow += 1;
+                    that.inputbox.querySelector('#shell-cmd').value = that.history[that.selectionArrow];
                     break;
                 case 'Tab':
                     e.preventDefault();
                     that._autocomplete(e.target);
-
                     break;
             }
         });
     }
 
+    /**
+     * Return a list of history commands.
+     * @return {string[]}
+     * @private
+     */
+    _fetchHistory() {
+        let result = window.localStorage.getItem('moodle-local_webshell/history');
+        if (result === null) {
+            return [];
+        }
+        let data = JSON.parse(result);
+        if (!Array.isArray(data)) {
+            return [];
+        }
+        return data;
+    }
+
+    /**
+     * Add command to history.
+     * @param {string} command
+     * @private
+     */
+    _pushToHistory(command) {
+        this.history.push(command);
+        window.localStorage.setItem('moodle-local_webshell/history', JSON.stringify(this.history));
+    }
+
+    /**
+     * Autocomplete file/directories.
+     * @param {HTMLElement} target
+     * @private
+     */
     _autocomplete(target) {
         let command = target.value;
         if (command.trim().length === 0) {

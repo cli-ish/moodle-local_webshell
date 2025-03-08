@@ -32,8 +32,14 @@ admin_externalpage_setup('local_webshell', '', null);
 $PAGE->set_heading($SITE->fullname);
 $PAGE->set_title($SITE->fullname . ': ' . get_string('pluginname', 'local_webshell'));
 
-$executor = new \local_webshell\executor();
+$reset = optional_param('reset', false, PARAM_BOOL);
+if ($reset && confirm_sesskey()) {
+    set_user_preference('local_webshell_current_dir', null);
+    redirect(new moodle_url('/local/webshell/run.php'));
+    exit();
+}
 
+$executor = new \local_webshell\executor();
 $path = get_user_preferences('local_webshell_current_dir', null);
 if ($path === null) {
     $path = $executor->get_working_dir();
@@ -49,12 +55,13 @@ $userposition = get_user_preferences('local_webshell_current_dir', $executor->ge
 
 // Todo: implement a reset function (button to reset workingdir and environments)
 // Todo: think about a way to use environment variables. export all and save them too?
-// Todo: implement history over preferences.
+
 $content = [
     'sesskey' => sesskey(),
     'username' => $executor->combined_user_hostname(),
     'workingdir' => $userposition,
     'image' => (new moodle_url('/local/webshell/pix/icon.svg'))->out(false),
+    'reseturl' => (new moodle_url('/local/webshell/run.php', ['reset' => 1, 'sesskey' => sesskey()]))->out(false),
 ];
 
 echo $OUTPUT->header();

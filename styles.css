@@ -1,4 +1,4 @@
-.local_webshell {
+.local_webshell .body-box {
     background-color: rgba(0, 0, 0, 0.15);
     margin-bottom: 30px;
 }
@@ -80,4 +80,8 @@
 
 .local_webshell .heading h2 {
     display: inline-block;
+}
+
+.local_webshell .btn.reset-preferences {
+    float: right;
 }

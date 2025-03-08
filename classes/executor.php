@@ -141,34 +141,17 @@ class executor {
      * @return array|null
      */
     private function extract_workingdir(string &$result): ?array {
-        $sep = "\n";
-        if (self::is_windows()) {
-            $sep = "\r\n";
-        }
-        $lines = explode($sep, $result);
+        $sep = self::is_windows() ? "\r\n" : "\n";
+        $lines = array_filter(explode($sep, $result), fn($line) => $line !== '');
         if (count($lines) == 0) {
             return null;
         }
-        $lastkey = -1;
-        $last = '';
-        foreach ($lines as $key => $line) { // Todo: improve this mess, looks like hot garbage.
-            if ($line !== '') {
-                $lastkey = $key;
-                $last = $line;
-            }
-        }
-        if ($lastkey != -1) {
-            unset($lines[$lastkey]);
-        }
-
-        $re = '/<-moodle-local_webshell->(.*?)<-moodle-local_webshell->/s';
-        preg_match_all($re, $last, $matches, PREG_SET_ORDER, 0);
-
-        if (count($matches) == 0) {
-            return null;
-        }
+        $last = array_pop($lines);
         $result = implode($sep, $lines);
-        return [$result, $matches[0][1]];
+        if (preg_match('/<-moodle-local_webshell->(.*?)<-moodle-local_webshell->/s', $last, $matches)) {
+            return [$result, $matches[1]];
+        }
+        return null;
     }
 
     /**
