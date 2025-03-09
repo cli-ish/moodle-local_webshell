@@ -24,6 +24,8 @@
 
 namespace local_webshell;
 
+use context_system;
+use local_webshell\event\command_executed;
 use local_webshell\pod\exec_result;
 
 /**
@@ -77,6 +79,7 @@ class executor {
                 $result[] = $base;
             }
         }
+        // Todo: check if this should be logged too?
         return array_unique($result);
     }
 
@@ -120,6 +123,13 @@ class executor {
             $workingdir = $this->get_working_dir();
         }
         $user = $this->combined_user_hostname();
+
+        $event = command_executed::create([
+            'context' => context_system::instance(),
+            'other' => ['command' => $cmd],
+        ]);
+        $event->trigger();
+
         return new exec_result($workingdir, $user, $result);
     }
 

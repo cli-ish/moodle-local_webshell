@@ -22,6 +22,8 @@
  * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
+$string['eventcommand_executed'] = 'Command executed';
+$string['eventcommand_executeddesc'] = 'The user with id {$a->userid}, has run the command "{$a->command}".';
 $string['pluginname'] = 'Webshell';
 $string['privacy:current_dir'] = 'The user\'s preference for current working directory.';
 $string['reset_preferences'] = 'Reset preferences';
