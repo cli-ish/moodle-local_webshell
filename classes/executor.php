@@ -47,38 +47,37 @@ class executor {
      * @throws \moodle_exception
      */
     public function hinting(string $value, string $type = 'binary'): array {
-        $result = [];
-        if (self::is_windows()) {
-            if ($type == 'binary') {
-                $cmd = 'where *.exe';
-            } else {
-                $cmd = 'dir /b';
-            }
-        } else {
-            if ($type == 'binary') {
-                $cmd = '(IFS=:;set -f;find -L $PATH -maxdepth 1 -type f -perm -100 -print;)';
-            } else {
-                $cmd = 'find . -maxdepth 1';
-            }
-        }
-        $res = $this->run($cmd, true);
+        $hintmap = [
+            'WINDOWS' => [
+                'binary' => 'where *.exe',
+                'file' => 'dir /b',
+            ],
+            'UNIX' => [
+                'binary' => '(IFS=:;set -f;find -L $PATH -maxdepth 1 -type f -perm -100 -print;)',
+                'file' => 'find . -maxdepth 1',
+            ],
+        ];
+        $cmd = $hintmap[self::is_windows() ? 'WINDOWS' : 'UNIX'][$type == 'binary' ? 'binary' : 'file'];
+        $res = $this->run_with_path_check($cmd);
         $res = $this->extract_workingdir($res);
         if ($res === null) {
             return [];
         }
-        $res = $res[0];
-        foreach (explode("\n", $res) as $line) {
-            if ($line !== '') {
-                $base = basename($line);
-                if ($type == 'file' && $line == '.') {
-                    continue;
-                }
-                if (substr($base, 0, strlen($value)) === $value) {
-                    $result[] = $base;
-                }
+        $result = [];
+        $res = explode("\n", $res[0]);
+        foreach ($res as $line) {
+            if ($line === '') {
+                continue;
+            }
+            $base = basename($line);
+            if ($type == 'file' && $line == '.') {
+                continue;
+            }
+            if (substr($base, 0, strlen($value)) === $value) {
+                $result[] = $base;
             }
         }
-        return $result;
+        return array_unique($result);
     }
 
     /**
@@ -112,7 +111,7 @@ class executor {
      * @throws \moodle_exception
      */
     public function execute(string $cmd): exec_result {
-        $result = $this->run($cmd, true);
+        $result = $this->run_with_path_check($cmd);
         $res = $this->extract_workingdir($result);
 
         if ($res != null) {
@@ -160,16 +159,13 @@ class executor {
      * @return string
      * @throws \moodle_exception
      */
-    public function get_hostname(): string {
-        if ($this->all_function_exist(['gethostname'])) {
+    private function get_hostname(): string {
+        if (runner::all_function_exist(['gethostname'])) {
             $hostname = gethostname();
             return $hostname;
         }
-        if (self::is_windows()) {
-            return $this->run('echo %USERDOMAIN%');
-        } else {
-            return $this->run('hostname');
-        }
+        $cmd = self::is_windows() ? 'echo %USERDOMAIN%' : 'hostname';
+        return $this->runner($cmd);
     }
 
     /**
@@ -178,23 +174,23 @@ class executor {
      * @return string
      * @throws \moodle_exception
      */
-    public function get_user_name(): string {
+    private function get_user_name(): string {
         if (self::is_windows()) {
-            if ($this->all_function_exist(['getenv'])) {
+            if (runner::all_function_exist(['getenv'])) {
                 $username = getenv('USERNAME');
                 if ($username !== false) {
                     return $username;
                 }
             }
         } else {
-            if ($this->all_function_exist(['posix_getpwuid', 'posix_geteuid'])) {
+            if (runner::all_function_exist(['posix_getpwuid', 'posix_geteuid'])) {
                 $pwuid = posix_getpwuid(posix_geteuid());
                 if ($pwuid !== false) {
                     return $pwuid['name'];
                 }
             }
         }
-        $username = $this->run('whoami');
+        $username = $this->runner('whoami');
         $username = explode('\\', $username);
         if (count($username) == 2) {
             return $username[1];
@@ -209,28 +205,21 @@ class executor {
      * @throws \moodle_exception
      */
     public function get_working_dir(): string {
-        if ($this->all_function_exist(['getcwd'])) {
+        if (runner::all_function_exist(['getcwd'])) {
             return getcwd();
         }
-        if (self::is_windows()) {
-            return $this->run('cd');
-        } else {
-            return $this->run('pwd');
-        }
+        $cmd = self::is_windows() ? 'cd' : 'pwd';
+        return $this->runner($cmd);
     }
 
     /**
-     * Try to run the user code.
-     *
-     * This function should NEVER be called by other plugins since we do NOT check capabilities here again,
-     * all checks are made in the WEBSERVICE's "execute" and "hinting"!
+     * Append path logging args to the cmd command in the hope to fetch the real path after execution.
      *
      * @param string $cmd
-     * @param bool   $pathcheck
      * @return string
      * @throws \moodle_exception
      */
-    public function run(string $cmd, bool $pathcheck = false): string {
+    private function run_with_path_check(string $cmd): string {
         if (self::is_windows()) {
             // Windows!
             $pathcheckstr = "&& (FOR /F \"tokens=*\" %g IN ('CD') do (SET VAR=%g)) &&" .
@@ -239,66 +228,21 @@ class executor {
             // Linux!
             $pathcheckstr = ';echo "<-moodle-local_webshell->${PWD}<-moodle-local_webshell->")';
         }
-        if (!$pathcheck) {
-            $pathcheckstr = '';
-        }
-        $cmd = "($cmd $pathcheckstr 2>&1";
-
-        if (function_exists('raise_memory_limit')) {
-            raise_memory_limit(MEMORY_HUGE);
-        }
-        if (function_exists('set_time_limit')) {
-            set_time_limit(300);
-        }
-
-        if (function_exists('shell_exec')) {
-            return shell_exec($cmd) ?? '';
-        } else if (function_exists('exec')) {
-            $output = [];
-            exec($cmd, $output);
-            return implode("\n", $output);
-        } else if ($this->all_function_exist(['system', 'ob_start', 'ob_get_contents', 'ob_end_clean'])) {
-            ob_start();
-            system($cmd);
-            $output = ob_get_contents();
-            ob_end_clean();
-            return !$output ? '' : $output;
-        } else if ($this->all_function_exist(['passthru', 'ob_start', 'ob_get_contents', 'ob_end_clean'])) {
-            ob_start();
-            passthru($cmd);
-            $output = ob_get_contents();
-            ob_end_clean();
-            return !$output ? '' : $output;
-        } else if ($this->all_function_exist(['popen', 'feof', 'fread', 'pclose'])) {
-            $output = '';
-            $handle = popen($cmd, 'r');
-            while (!feof($handle)) {
-                $output .= fread($handle, 4096);
-            }
-            pclose($handle);
-            return $output;
-        } else if ($this->all_function_exist(['proc_open', 'stream_get_contents', 'proc_close'])) {
-            $handle = proc_open($cmd, [0 => ['pipe', 'r'], 1 => ['pipe', 'w']], $pipes);
-            $output = stream_get_contents($pipes[1]);
-            proc_close($handle);
-            return !$output ? '' : $output;
-        }
-        throw new \moodle_exception('noexecturofunctionfound', 'local_webshell');
+        $cmd = "( $cmd $pathcheckstr 2>&1";
+        return $this->runner($cmd);
     }
 
-
     /**
-     * Determine the functions available to select the best approach for the executor.
+     * Wrap calls to runner class.
      *
-     * @param array $list
-     * @return bool
+     * @param string $cmd
+     * @return string
+     * @throws \moodle_exception
      */
-    private function all_function_exist(array $list = []): bool {
-        foreach ($list as $entry) {
-            if (!function_exists($entry)) {
-                return false;
-            }
+    private function runner(string $cmd): string {
+        if (!defined('ALLOWED_SHELL_RUN')) {
+            define('ALLOWED_SHELL_RUN', true); // Allow call.
         }
-        return true;
+        return runner::run($cmd);
     }
 }
