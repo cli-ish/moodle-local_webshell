@@ -1,6 +1,6 @@
 name: Moodle Plugin CI
 
-on: [push, pull_request]
+on: [ push, pull_request ]
 
 jobs:
   test:
@@ -31,10 +31,9 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - { moodle-branch: 'MOODLE_311_STABLE', php: '7.3', database: 'pgsql' }
-          - { moodle-branch: 'MOODLE_311_STABLE', php: '7.4', database: 'pgsql' }
-          - {moodle-branch: 'MOODLE_405_STABLE', php: '8.1', database: 'pgsql'}
-          - {moodle-branch: 'MOODLE_500_STABLE', php: '8.2', database: 'pgsql'}
+          - { moodle-branch: 'MOODLE_401_STABLE', php: '7.4', database: 'pgsql' }
+          - { moodle-branch: 'MOODLE_405_STABLE', php: '8.1', database: 'pgsql' }
+          - { moodle-branch: 'MOODLE_500_STABLE', php: '8.2', database: 'pgsql' }
           - { moodle-branch: 'MOODLE_500_STABLE', php: '8.3', database: 'pgsql' }
           - { moodle-branch: 'MOODLE_500_STABLE', php: '8.4', database: 'pgsql' }
     steps:
