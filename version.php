@@ -28,5 +28,5 @@ $plugin->component = 'local_webshell';
 $plugin->version = 2025041600;
 $plugin->requires = 2022041900;
 $plugin->maturity = MATURITY_STABLE;
-$plugin->release = '1.0.3';
+$plugin->release = '1.0.4';
 $plugin->supported = [311, 500];
